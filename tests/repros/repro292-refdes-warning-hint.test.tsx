@@ -61,17 +61,23 @@ test("the missing-refdes hint resolves to working reference text", async () => {
   expect(suggestedPlaceholder).toBe("{REF}")
   const cases = await Promise.all([
     Promise.resolve(missingReference),
-    renderReferenceCase({ name: "MP2", label: "{REFDES}" }),
-    renderReferenceCase({ name: "MP3", label: suggestedPlaceholder }),
+    renderReferenceCase({ name: "MP2", label: suggestedPlaceholder }),
+    renderReferenceCase({ name: "MP3", label: "{REF}" }),
     renderReferenceCase({ name: "MP4", label: "{NAME}" }),
   ])
-  expect(cases.map((result) => result.warnings.length)).toEqual([1, 1, 0, 0])
+  expect(cases.map((result) => result.warnings.length)).toEqual([1, 0, 0, 0])
   expect(cases[0].warnings[0].message).toContain(
     '<schematictext text="{REF}" />',
   )
-  expect(cases[1].symbolTexts).toEqual(["{REFDES}"])
+  expect(cases[1].symbolTexts).toEqual(["MP2"])
   expect(cases[2].symbolTexts).toEqual(["MP3"])
   expect(cases[3].symbolTexts).toEqual(["MP4"])
+  const unsupportedPlaceholder = await renderReferenceCase({
+    name: "MP5",
+    label: "{REFDES}",
+  })
+  expect(unsupportedPlaceholder.symbolTexts).toEqual(["{REFDES}"])
+  expect(unsupportedPlaceholder.warnings).toHaveLength(1)
   const panels = cases.map((result, index) => {
     const title = result.label ? `text="${result.label}"` : "No reference text"
     const status = `${result.name}: ${result.warnings.length} missing-refdes warning${result.warnings.length === 1 ? "" : "s"}`
